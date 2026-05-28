@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home, Layers, FileText, Settings, LogOut } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Sidebar({ activeSection, onSelect }) {
   const sections = [
@@ -19,7 +20,7 @@ export default function Sidebar({ activeSection, onSelect }) {
         <div className="sidebar-title">WaziGov</div>
       </div>
       <div className="sidebar-profile">
-        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&h=80&q=80" alt="User" className="profile-avatar" />
+        <img src="/kenyan-shield.svg" alt="User" className="profile-avatar" />
         <div>
           <div className="profile-name">Citizen Auditor</div>
           <div className="profile-role">Public Guardian</div>
@@ -38,6 +39,10 @@ export default function Sidebar({ activeSection, onSelect }) {
           </a>
         ))}
       </nav>
+
+      <div style={{ marginTop: 'auto' }}>
+        <ThemeToggle />
+      </div>
     </aside>
   );
 }

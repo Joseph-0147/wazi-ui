@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Database, FileSpreadsheet, RefreshCw, Layers } from 'lucide-react';
+import { ShieldCheck, Database, FileSpreadsheet } from 'lucide-react';
 import { mockProjects } from './data/mockProjects';
-import StatsGrid from './components/StatsGrid';
-import MapVisualization from './components/MapVisualization';
-import Filters from './components/Filters';
-import ProjectCard from './components/ProjectCard';
-import ProjectDetailsModal from './components/ProjectDetailsModal';
 import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import Projects from './pages/Projects';
+import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 
 export default function App() {
   const [projects, setProjects] = useState(mockProjects);
@@ -37,8 +36,6 @@ export default function App() {
       const updated = prevProjects.map(p => {
         if (p.id === projectId) {
           const updatedReports = [newReport, ...p.citizenReports];
-          // Recalculate average progress based on citizen ground reports if we want,
-          // or just add it to the feed. Let's add it to the feed.
           return {
             ...p,
             citizenReports: updatedReports
@@ -47,7 +44,6 @@ export default function App() {
         return p;
       });
 
-      // Also update the active modal detail view if currently open
       const matched = updated.find(p => p.id === projectId);
       if (matched && selectedProject && selectedProject.id === projectId) {
         setSelectedProject(matched);
@@ -72,13 +68,60 @@ export default function App() {
     return matchesSearch && matchesCounty && matchesSector && matchesOpinion && matchesStatus;
   });
 
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <Dashboard 
+          projects={projects}
+          filteredProjects={filteredProjects}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedCounty={selectedCounty}
+          setSelectedCounty={setSelectedCounty}
+          selectedSector={selectedSector}
+          setSelectedSector={setSelectedSector}
+          selectedOpinion={selectedOpinion}
+          setSelectedOpinion={setSelectedOpinion}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          handleResetFilters={handleResetFilters}
+          selectedProject={selectedProject}
+          setSelectedProject={setSelectedProject}
+          handleAddCitizenReport={handleAddCitizenReport}
+        />;
+      case 'projects':
+        return <Projects />;
+      case 'reports':
+        return <Reports />;
+      case 'settings':
+        return <Settings />;
+      default:
+        return <Dashboard 
+          projects={projects}
+          filteredProjects={filteredProjects}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedCounty={selectedCounty}
+          setSelectedCounty={setSelectedCounty}
+          selectedSector={selectedSector}
+          setSelectedSector={setSelectedSector}
+          selectedOpinion={selectedOpinion}
+          setSelectedOpinion={setSelectedOpinion}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          handleResetFilters={handleResetFilters}
+          selectedProject={selectedProject}
+          setSelectedProject={setSelectedProject}
+          handleAddCitizenReport={handleAddCitizenReport}
+        />;
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <Sidebar activeSection={activeSection} onSelect={setActiveSection} />
 
-      {/* ── Main Panel (shifted right of sidebar) ── */}
       <div className="material-main-panel">
-
         {/* Top Bar */}
         <header className="topbar">
           <div className="topbar-left">
@@ -108,88 +151,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* Stats Cards Row */}
-        <section>
-          <StatsGrid projects={filteredProjects} />
-        </section>
-
-        {/* Main interactive directory workspace */}
-        <main style={styles.mainGrid}>
-
-          {/* Left: Filters + Project List */}
-          <section style={styles.leftCol}>
-
-            <Filters
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCounty={selectedCounty}
-              setSelectedCounty={setSelectedCounty}
-              selectedSector={selectedSector}
-              setSelectedSector={setSelectedSector}
-              selectedOpinion={selectedOpinion}
-              setSelectedOpinion={setSelectedOpinion}
-              selectedStatus={selectedStatus}
-              setSelectedStatus={setSelectedStatus}
-              onReset={handleResetFilters}
-            />
-
-            {/* Results count */}
-            <div style={styles.resultsHeader}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Layers size={16} style={{ color: 'var(--accent-secondary)' }} />
-                <span style={styles.resultsCount}>
-                  Showing {filteredProjects.length} of {projects.length} Audited Projects
-                </span>
-              </div>
-              {selectedCounty && (
-                <span className="badge badge-clean" style={{ textTransform: 'capitalize' }}>
-                  Filtered: {selectedCounty} County
-                </span>
-              )}
-            </div>
-
-            {filteredProjects.length > 0 ? (
-              <div style={styles.projectGrid}>
-                {filteredProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onSelect={setSelectedProject}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="glass-panel" style={styles.emptyState}>
-                <RefreshCw size={44} style={styles.emptyIcon} />
-                <h3 style={styles.emptyTitle}>No matching audit profiles found</h3>
-                <p style={styles.emptyDesc}>Try expanding your filter parameters or search terms to find public projects.</p>
-                <button className="btn-primary" style={{ marginTop: '12px' }} onClick={handleResetFilters}>
-                  Reset Search Directory
-                </button>
-              </div>
-            )}
-
-          </section>
-
-          {/* Right: Interactive Map */}
-          <section style={styles.rightCol}>
-            <MapVisualization
-              activeCounty={selectedCounty}
-              onSelectCounty={setSelectedCounty}
-              projects={projects}
-            />
-          </section>
-
-        </main>
-
-        {/* Modal overlay */}
-        {selectedProject && (
-          <ProjectDetailsModal
-            project={selectedProject}
-            onClose={() => setSelectedProject(null)}
-            onAddCitizenReport={handleAddCitizenReport}
-          />
-        )}
+        {renderSection()}
 
         {/* Footer */}
         <footer className="app-footer">
@@ -201,68 +163,7 @@ export default function App() {
             Designed for Public Audit Integration by Joseph Kariuki, Daniel Mwangi, Giovanni Opiyo (Group 0147)
           </div>
         </footer>
-
-      </div>{/* end material-main-panel */}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  mainGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1.25fr 0.75fr',
-    gap: '24px',
-    alignItems: 'start',
-    width: '100%',
-  },
-  leftCol: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  rightCol: {
-    position: 'sticky',
-    top: '24px',
-  },
-  resultsHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0 4px',
-  },
-  resultsCount: {
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    color: 'var(--text-secondary)',
-  },
-  projectGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-    gap: '20px',
-  },
-  emptyState: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '60px 40px',
-    textAlign: 'center',
-  },
-  emptyIcon: {
-    color: 'var(--text-muted)',
-    marginBottom: '16px',
-  },
-  emptyTitle: {
-    fontFamily: 'var(--font-display)',
-    fontWeight: '700',
-    fontSize: '1.1rem',
-    color: 'var(--text-title)',
-  },
-  emptyDesc: {
-    fontSize: '0.82rem',
-    color: 'var(--text-secondary)',
-    maxWidth: '300px',
-    marginTop: '6px',
-    lineHeight: '1.4',
-  },
-};

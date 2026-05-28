@@ -5,7 +5,6 @@ export default function MapVisualization({ activeCounty, onSelectCounty, project
   const [hoveredCounty, setHoveredCounty] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  // Group statistics by county for the map view
   const getCountyStats = (countyName) => {
     const countyProjects = projects.filter(p => p.county.toLowerCase() === countyName.toLowerCase());
     const totalBudget = countyProjects.reduce((acc, p) => acc + p.budget, 0);
@@ -15,52 +14,10 @@ export default function MapVisualization({ activeCounty, onSelectCounty, project
     return {
       count: countyProjects.length,
       budget: totalBudget,
-      queryRate
+      queryRate,
+      name: countyName
     };
   };
-
-  const counties = [
-    {
-      id: "Turkana",
-      name: "Turkana County",
-      color: "var(--color-qualified)",
-      path: "M 80 50 L 150 40 L 170 120 L 110 140 Z",
-      labelX: 120,
-      labelY: 85
-    },
-    {
-      id: "Kisumu",
-      name: "Kisumu County",
-      color: "var(--accent-secondary)",
-      path: "M 40 160 L 90 150 L 80 190 L 50 180 Z",
-      labelX: 65,
-      labelY: 170
-    },
-    {
-      id: "Kiambu",
-      name: "Kiambu County",
-      color: "var(--color-disclaimer)",
-      path: "M 130 165 L 180 155 L 170 195 L 140 190 Z",
-      labelX: 155,
-      labelY: 175
-    },
-    {
-      id: "Nairobi",
-      name: "Nairobi County",
-      color: "var(--accent-blue)",
-      path: "M 148 188 A 12 12 0 1 1 148 212 A 12 12 0 1 1 148 188 Z",
-      labelX: 148,
-      labelY: 204
-    },
-    {
-      id: "Mombasa",
-      name: "Mombasa County",
-      color: "var(--color-clean)",
-      path: "M 230 250 L 280 230 L 290 270 L 250 280 Z",
-      labelX: 260,
-      labelY: 260
-    }
-  ];
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -75,6 +32,16 @@ export default function MapVisualization({ activeCounty, onSelectCounty, project
     if (val >= 1e6) return `KES ${(val / 1e6).toFixed(1)} Million`;
     return `KES ${val.toLocaleString()}`;
   };
+
+  // A simple list of county names for the new map
+  const countyNames = [
+    'Mombasa', 'Kwale', 'Kilifi', 'Tana River', 'Lamu', 'Taita-Taveta', 'Garissa', 'Wajir', 
+    'Mandera', 'Marsabit', 'Isiolo', 'Meru', 'Tharaka-Nithi', 'Embu', 'Kitui', 'Machakos', 
+    'Makueni', 'Nyandarua', 'Nyeri', 'Kirinyaga', 'Muranga', 'Kiambu', 'Turkana', 'West Pokot', 
+    'Samburu', 'Trans Nzoia', 'Uasin Gishu', 'Elgeyo-Marakwet', 'Nandi', 'Baringo', 'Laikipia', 
+    'Nakuru', 'Narok', 'Kajiado', 'Kericho', 'Bomet', 'Kakamega', 'Vihiga', 'Bungoma', 'Busia', 
+    'Siaya', 'Kisumu', 'Homa Bay', 'Migori', 'Kisii', 'Nyamira', 'Nairobi'
+  ];
 
   return (
     <div className="material-card" style={styles.container}>
@@ -100,82 +67,9 @@ export default function MapVisualization({ activeCounty, onSelectCounty, project
       </div>
 
       <div style={styles.mapLayout} onMouseMove={handleMouseMove}>
-        <svg viewBox="0 0 350 320" style={styles.svg}>
-          <defs>
-            <pattern id="grid-light" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0, 0, 0, 0.02)" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid-light)" rx="10" />
-
-          {/* Connective network nodes path */}
-          <path d="M 120 85 L 65 170 L 148 204 L 260 260 M 155 175 L 148 204" fill="none" stroke="rgba(0, 188, 212, 0.08)" strokeWidth="1.5" strokeDasharray="3 3" />
-
-          {/* Render active county paths */}
-          {counties.map((c) => {
-            const stats = getCountyStats(c.id);
-            const isHovered = hoveredCounty && hoveredCounty.id === c.id;
-            const isActive = activeCounty && activeCounty.toLowerCase() === c.id.toLowerCase();
-            
-            let pulseColor = 'var(--accent-blue)';
-            if (stats.queryRate > 40) {
-              pulseColor = 'var(--color-adverse)';
-            } else if (stats.queryRate > 0) {
-              pulseColor = 'var(--color-qualified)';
-            } else if (stats.count > 0) {
-              pulseColor = 'var(--color-clean)';
-            }
-
-            return (
-              <g key={c.id}>
-                {(isActive || isHovered) && (
-                  <path 
-                    d={c.path}
-                    fill="none"
-                    stroke={pulseColor}
-                    strokeWidth="6"
-                    opacity="0.15"
-                    style={{ transition: 'all 0.4s ease' }}
-                  />
-                )}
-
-                <path
-                  d={c.path}
-                  className={`map-county-path ${isActive ? 'active' : ''}`}
-                  onMouseEnter={() => setHoveredCounty({ ...c, ...stats })}
-                  onMouseLeave={() => setHoveredCounty(null)}
-                  onClick={() => onSelectCounty(isActive ? '' : c.id)}
-                />
-
-                {stats.count > 0 && (
-                  <circle
-                    cx={c.labelX}
-                    cy={c.labelY - 5}
-                    r={isActive ? "6" : "4"}
-                    fill={pulseColor}
-                    style={{
-                      boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-                      pointerEvents: 'none'
-                    }}
-                  />
-                )}
-
-                <text
-                  x={c.labelX}
-                  y={c.labelY + 16}
-                  fill="var(--text-main)"
-                  fontSize="9.5"
-                  fontWeight="700"
-                  fontFamily="'Outfit', var(--font-sans)"
-                  textAnchor="middle"
-                  style={{ pointerEvents: 'none', opacity: 0.8 }}
-                >
-                  {c.id}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+        <img src="/kenya-map.svg" alt="Map of Kenya" 
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+        />
 
         {/* Tooltip card */}
         {hoveredCounty && (
@@ -187,7 +81,7 @@ export default function MapVisualization({ activeCounty, onSelectCounty, project
             }}
           >
             <div style={styles.tooltipHeader}>
-              <MapPin size={13} style={{ color: hoveredCounty.color }} />
+              <MapPin size={13} />
               <span style={styles.tooltipTitle}>{hoveredCounty.name}</span>
             </div>
             <div style={styles.tooltipBody}>
@@ -277,10 +171,6 @@ const styles = {
     borderRadius: '10px',
     border: '1px solid var(--border-light)',
     overflow: 'hidden',
-  },
-  svg: {
-    width: '100%',
-    maxHeight: '310px',
   },
   tooltip: {
     position: 'absolute',
